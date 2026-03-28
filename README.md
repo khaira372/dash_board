@@ -46,19 +46,6 @@ script.js
 - Chart.js
 
 
----
-![image alt]([image_url](https://github.com/khaira372/Dashboard-_fron-end/blob/a42bdb96432b694507f4471b64f2134e7a895c9e/front-end.png))
-![image alt]([[image_url](https://github.com/khaira372/Dashboard-_fron-end/blob/a42bdb96432b694507f4471b64f2134e7a895c9e/front-end.png)](https://github.com/khaira372/Dashboard-_fron-end/blob/a42bdb96432b694507f4471b64f2134e7a895c9e/Dashboard.png))
-
-
-
-
----
-## ▶️ How to Run the Project
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/khaira372/front-end.git
 
 
 
