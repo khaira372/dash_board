@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Recensement Agricole</title>
+    <meta name="description" content="Tableau de bord du Recensement Général de l'Agriculture - AgriStats">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i class="fas fa-seedling"></i>
+            <span>AgriStats</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" onclick="showSection('dashboard', this)">
+                <i class="fas fa-chart-line"></i>
+                <span>Tableau de bord</span>
+            </li>
+            <li onclick="showSection('exploitations', this)">
+                <i class="fas fa-tractor"></i>
+                <span>Exploitations</span>
+            </li>
+            <li onclick="showSection('cultures', this)">
+                <i class="fas fa-wheat-awn"></i>
+                <span>Cultures</span>
+            </li>
+            <li onclick="showSection('elevage', this)">
+                <i class="fas fa-cow"></i>
+                <span>Élevage</span>
+            </li>
+            <li onclick="showSection('infrastructure', this)">
+                <i class="fas fa-warehouse"></i>
+                <span>Infrastructure</span>
+            </li>
+            <li onclick="showSection('map', this)">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Carte</span>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header with Filters -->
+        <header class="header">
+            <h1>Recensement Général de l'Agriculture</h1>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="wilayaFilter">Wilaya</label>
+                    <select id="wilayaFilter" onchange="loadCommunes(); updateDashboard();">
+                        <option value="">Toutes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="communeFilter">Commune</label>
+                    <select id="communeFilter" onchange="updateDashboard();">
+                        <option value="">Toutes</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="yearFilter">Année</label>
+                    <select id="yearFilter" onchange="updateDashboard();">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #e3f2fd; color: #1976d2;">
+                        <i class="fas fa-tractor"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <h3 id="totalExploitations">-</h3>
+                        <p>Exploitations</p>
+                        <span class="trend positive"><i class="fas fa-arrow-up"></i> +12%</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #f3e5f5; color: #7b1fa2;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <h3 id="totalExploitants">-</h3>
+                        <p>Exploitants</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #e8f5e9; color: #388e3c;">
+                        <i class="fas fa-map"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <h3 id="totalSAU">-</h3>
+                        <p>SAU Totale (ha)</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: #fff3e0; color: #f57c00;">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <h3 id="irrigationRate">-%</h3>
+                        <p>Taux d'irrigation</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3>Répartition des Exploitations par Statut Juridique</h3>
+                    <canvas id="statutChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Utilisation des Terres (SAU)</h3>
+                    <canvas id="landUseChart"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container wide">
+                    <h3>Principales Cultures (Surface en ha)</h3>
+                    <canvas id="culturesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Cheptel par Espèce</h3>
+                    <canvas id="cheptelChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exploitations Section -->
+        <section id="exploitations" class="section">
+            <div class="section-header">
+                <h2>Liste des Exploitations</h2>
+                <div class="search-box">
+                    <input type="text" id="searchExploitation" placeholder="Rechercher..." onkeyup="filterExploitations()">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th>Exploitant</th>
+                            <th>Wilaya</th>
+                            <th>Commune</th>
+                            <th>Superficie</th>
+                            <th>Activité</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exploitationsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Cultures Section -->
+        <section id="cultures" class="section">
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3>Surfaces par Catégorie de Culture</h3>
+                    <canvas id="categorieCultureChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Irrigation vs Sec</h3>
+                    <canvas id="irrigationChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Élevage Section -->
+        <section id="elevage" class="section">
+            <div class="charts-row">
+                <div class="chart-container wide">
+                    <h3>Détail du Cheptel</h3>
+                    <canvas id="detailCheptelChart"></canvas>
+                </div>
+            </div>
+            <div class="kpi-container" id="elevageKPIs"></div>
+        </section>
+
+        <!-- Infrastructure Section -->
+        <section id="infrastructure" class="section">
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3>Bâtiments d'Exploitation</h3>
+                    <canvas id="batimentsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Matériel Agricole</h3>
+                    <canvas id="materielChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section id="map" class="section">
+            <div id="mapContainer"></div>
+            <div class="map-legend">
+                <h4>Légende</h4>
+                <div class="legend-item">
+                    <span class="marker vegetal"></span> Production Végétale
+                </div>
+                <div class="legend-item">
+                    <span class="marker animal"></span> Production Animale
+                </div>
+                <div class="legend-item">
+                    <span class="marker mixte"></span> Mixte
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Détails de l'exploitation</h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
